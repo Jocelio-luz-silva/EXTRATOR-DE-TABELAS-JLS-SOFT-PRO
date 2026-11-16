@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Extrator de PDF_PRO JLS SOFT</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0B4DA6">
+<meta name="application-name" content="Extrator PDF PRO">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Extrator PDF">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --ink:#14213D;
+    --paper:#0B4DA6;
+    --paper-2:#E9F3FF;
+    --line:#C3DBF7;
+    --teal:#00B4D8;
+    --teal-dark:#0086A8;
+    --amber:#FF8A00;
+    --amber-bg:#FFECD1;
+    --muted:#5B6B85;
+    --mono:'IBM Plex Mono', ui-monospace, monospace;
+    --sans:'IBM Plex Sans', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-tap-highlight-color:transparent;}
+  body{padding-bottom:48px;}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px;}
+
+  header.top{
+    padding:22px 16px 18px;
+    border-bottom:1px solid var(--line);
+    position:relative;
+  }
+  .brand-row{display:flex; align-items:center; justify-content:center; max-width:720px; margin:0 auto;}
+  .brand-logo{height:120px; width:auto; display:block; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,.18);}
+  @media (min-width:480px){ .brand-logo{height:150px;} }
+  h1{font-family:var(--sans); font-weight:600; font-size:22px; line-height:1.25; margin:14px auto 0; max-width:720px; color:#FAFCFF;}
+  h1 span{color:#66E0FF;}
+
+  .steps{display:flex; gap:0; max-width:720px; margin:16px auto 0; padding:0 16px; }
+  .step{flex:1; text-align:center; position:relative; font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:#BEDCFA; padding-bottom:10px;}
+  .step .dot{width:9px;height:9px;border-radius:50%;background:var(--line); margin:0 auto 6px; border:2px solid var(--paper); box-shadow:0 0 0 1px var(--line);}
+  .step.active .dot{background:#66E0FF; box-shadow:0 0 0 1px #66E0FF;}
+  .step.done .dot{background:#FAFCFF; box-shadow:0 0 0 1px #FAFCFF;}
+  .step::before{content:""; position:absolute; top:4px; left:-50%; width:100%; height:2px; background:rgba(255,255,255,.28); z-index:-1;}
+  .step:first-child::before{display:none;}
+  .step.done::before{background:#FAFCFF;}
+  .step-label{display:block;}
+
+  main{padding-top:20px;}
+  section{margin-bottom:18px;}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:18px;
+  }
+  .card h2{font-size:14px; margin:0 0 4px; font-family:var(--mono); letter-spacing:.05em; text-transform:uppercase; color:var(--teal-dark);}
+  .card p.hint{color:var(--muted); font-size:13px; margin:0 0 14px;}
+
+  .drop{
+    border:1.5px dashed var(--line);
+    border-radius:3px;
+    padding:26px 16px;
+    text-align:center;
+    background:var(--paper-2);
+  }
+  .drop.dragover{border-color:var(--teal); background:var(--amber-bg);}
+  .drop p{margin:0 0 12px; font-size:13px; color:var(--muted);}
+
+  input[type=file]{display:none;}
+  label.file-btn, button{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    font-family:var(--sans); font-weight:600; font-size:14px;
+    padding:11px 18px; border-radius:3px; border:1px solid transparent;
+    cursor:pointer; user-select:none; -webkit-user-select:none;
+    transition:transform .08s ease, background .15s ease;
+  }
+  label.file-btn:active, button:active{transform:scale(0.98);}
+  label.file-btn{background:var(--ink); color:#fff;}
+  button.primary{background:var(--teal); color:#fff; width:100%;}
+  button.primary:disabled{background:var(--line); color:var(--muted); cursor:not-allowed;}
+  button.ghost{background:transparent; color:var(--ink); border-color:var(--line);}
+  .filename{font-family:var(--mono); font-size:12.5px; margin-top:12px; color:var(--ink); word-break:break-all;}
+
+  .status{font-family:var(--mono); font-size:12.5px; color:var(--muted); margin-top:10px; min-height:16px;}
+  .status.err{color:#E5342B;}
+  .status.ok{color:var(--teal-dark);}
+
+  .preview-meta{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;}
+  .preview-meta .count{font-family:var(--mono); font-size:12px; color:var(--muted);}
+  .table-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:3px; -webkit-overflow-scrolling:touch;}
+  table.preview{border-collapse:collapse; width:100%; font-family:var(--mono); font-size:12px; white-space:nowrap;}
+  table.preview th{
+    background:var(--ink); color:#fff; text-align:left; padding:8px 10px;
+    position:sticky; top:0; font-weight:600; letter-spacing:.02em;
+  }
+  table.preview td{padding:7px 10px; border-top:1px solid var(--line);}
+  table.preview tr:nth-child(even) td{background:var(--paper-2);}
+  .more-rows{font-family:var(--mono); font-size:11.5px; color:var(--muted); padding:8px 10px; border-top:1px solid var(--line);}
+
+  .export-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;}
+  .export-btn{
+    display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+    padding:14px; border-radius:3px; border:1px solid var(--line); background:#fff;
+    cursor:pointer; text-align:left; position:relative; overflow:hidden;
+  }
+  .export-btn::before{
+    content:""; position:absolute; top:0; bottom:0; left:0; width:4px; background:var(--teal);
+  }
+  .export-btn.xlsx::before{background:var(--teal);}
+  .export-btn.csv::before{background:var(--amber);}
+  .export-btn .ico{font-size:18px;}
+  .export-btn .lbl{font-family:var(--sans); font-weight:600; font-size:13.5px;}
+  .export-btn .sub{font-family:var(--mono); font-size:11px; color:var(--muted);}
+  .export-btn:disabled{opacity:.45; cursor:not-allowed;}
+
+  footer{max-width:720px; margin:28px auto 0; padding:14px 16px 0; border-top:1px solid var(--line);}
+  footer p{font-family:var(--mono); font-size:11px; color:#BEDCFA; margin:0;}
+
+  .hidden{display:none !important;}
+
+  .mode-tabs{display:flex; gap:8px; max-width:720px; margin:16px auto 0; padding:0 16px;}
+  .mode-tab{
+    flex:1; text-align:center; font-family:var(--sans); font-weight:600; font-size:13px;
+    padding:10px 8px; border-radius:3px; border:1px solid var(--line); background:#fff; color:var(--muted);
+    cursor:pointer; user-select:none; -webkit-user-select:none;
+  }
+  .mode-tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  .marcas-tabs{display:flex; gap:8px; max-width:720px; margin:16px auto 0; padding:0 16px;}
+  .marcas-tab-btn{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+    font-family:var(--sans); font-weight:600; font-size:12.5px;
+    padding:10px 8px; border-radius:3px; border:1px solid var(--line); background:#fff; color:var(--muted);
+    cursor:pointer; user-select:none; -webkit-user-select:none;
+  }
+  .marcas-tab-btn.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .marcas-tab-btn .badge{
+    display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px;
+    border-radius:9px; background:var(--teal); color:#fff; font-family:var(--mono); font-size:11px; font-weight:700;
+  }
+  .marcas-tab-btn.active .badge{background:#fff; color:var(--ink);}
+
+  .marcas-botoes-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+  .marcas-botoes-row button{flex:1; min-width:120px; font-size:13px; padding:10px 12px;}
+
+  .lista-adivinhadas{border:1px solid var(--line); border-radius:3px; max-height:340px; overflow-y:auto;}
+  .item-adivinhada{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    border-bottom:1px solid var(--line); font-family:var(--sans); font-size:13.5px; color:var(--ink);
+  }
+  .item-adivinhada:last-child{border-bottom:none;}
+  .item-adivinhada input[type=checkbox]{width:17px; height:17px; flex-shrink:0; accent-color:var(--teal);}
+  .item-adivinhada .nome-marca{flex:1; word-break:break-word;}
+  .item-adivinhada input.input-nome-marca{
+    flex:1; min-width:0; font-family:var(--sans); font-size:13.5px; color:var(--ink);
+    border:1px solid transparent; border-radius:3px; padding:5px 7px; background:transparent;
+  }
+  .item-adivinhada input.input-nome-marca:focus{border-color:var(--teal); background:#fff; outline:none;}
+  .item-adivinhada input.input-nome-marca.editado{border-color:var(--line); background:var(--amber-bg);}
+  .item-adivinhada .contagem-marca{font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:nowrap;}
+  .lista-adivinhadas-vazia{padding:20px 12px; text-align:center; color:var(--muted); font-size:13px;}
+
+  .compare-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:520px){ .compare-grid{grid-template-columns:1fr;} }
+  .compare-col h3{font-family:var(--mono); font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin:0 0 8px;}
+  .drop.small{padding:18px 12px;}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-family:var(--mono); font-size:11.5px; letter-spacing:.03em; text-transform:uppercase; color:var(--muted); margin-bottom:6px;}
+  .field select{
+    width:100%; font-family:var(--sans); font-size:14px; padding:10px 12px;
+    border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink);
+  }
+  .badge-mais-recente{display:inline-block; font-family:var(--mono); font-size:10.5px; padding:2px 6px; border-radius:2px; background:var(--teal); color:#fff; margin-left:6px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand-row">
+    <img class="brand-logo" src="logo-header.png" alt="JLS SOFT — Pensar. Criar. Evoluir.">
+  </div>
+  <h1 class="wrap">PDF <span>→</span> extração <span>→</span> tratamento <span>→</span> Excel / CSV</h1>
+</header>
+
+<div class="mode-tabs">
+  <div class="mode-tab active" id="tab-single">Extrair 1 arquivo</div>
+  <div class="mode-tab" id="tab-compare">Comparar 2 arquivos por período</div>
+</div>
+
+<div class="steps" id="steps-single">
+  <div class="step active" data-step="1"><span class="dot"></span><span class="step-label">Importar</span></div>
+  <div class="step" data-step="2"><span class="dot"></span><span class="step-label">Extrair</span></div>
+  <div class="step" data-step="3"><span class="dot"></span><span class="step-label">Pré-visualizar</span></div>
+  <div class="step" data-step="4"><span class="dot"></span><span class="step-label">Exportar</span></div>
+</div>
+
+<main class="wrap">
+
+ <div class="marcas-tabs">
+    <button type="button" class="marcas-tab-btn active" id="btn-toggle-marcas">
+      <span>🏷️ Marcas conhecidas</span>
+      <span class="badge" id="badge-marcas-conhecidas" style="display:none;"></span>
+    </button>
+    <button type="button" class="marcas-tab-btn" id="btn-toggle-adivinhadas">
+      <span>🔍 Marcas adivinhadas</span>
+      <span class="badge" id="badge-marcas-adivinhadas" style="display:none;"></span>
+    </button>
+  </div>
+
+ <section class="card hidden" id="card-marcas-conhecidas">
+    <h2>Marcas conhecidas <span style="font-weight:400; color:var(--muted); font-size:13px; text-transform:none; letter-spacing:0;">(opcional)</span></h2>
+    <p class="hint">Cole aqui as marcas do seu catálogo, uma por linha — de qualquer tamanho, desde uma palavra só ("OLYMPIKUS") até várias ("TIGRE DA MONTANHA AZUL"). Se uma descrição bater com uma marca da lista, o app usa ela direto — só tenta adivinhar quando não encontra. Fica salvo neste navegador.</p>
+    <textarea id="lista-marcas" rows="5" placeholder="OLYMPIKUS&#10;VIA MARTE&#10;BEIRA RIO&#10;NIKE" style="width:100%; font-family:var(--mono); font-size:13px; padding:10px 12px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); resize:vertical;"></textarea>
+    <div class="marcas-botoes-row">
+      <button class="primary" id="btn-salvar-marcas">💾 Salvar</button>
+      <button class="ghost" id="btn-exportar-marcas">⬇️ Exportar .txt</button>
+      <button class="ghost" id="btn-importar-marcas">⬆️ Importar .txt</button>
+    </div>
+    <input type="file" id="input-importar-marcas" accept=".txt,text/plain" style="display:none;">
+    <div class="status" id="status-marcas"></div>
+  </section>
+
+ <section class="card hidden" id="card-marcas-adivinhadas">
+    <h2>Marcas adivinhadas</h2>
+    <p class="hint">Marcas que o app precisou adivinhar por frequência ou posição, porque não estavam na lista de marcas conhecidas. Toque no nome pra corrigir se veio errado, desmarque o que não for realmente uma marca, e adicione à lista principal — assim, da próxima vez, não precisam mais ser adivinhadas.</p>
+    <div class="lista-adivinhadas" id="lista-adivinhadas-container">
+      <div class="lista-adivinhadas-vazia">Nenhuma marca adivinhada ainda — extraia um PDF sem marca correspondente na lista conhecida pra ver itens aqui.</div>
+    </div>
+    <div class="marcas-botoes-row">
+      <button class="ghost" id="btn-selecionar-todas-adivinhadas">Selecionar todas</button>
+      <button class="primary" id="btn-adicionar-adivinhadas">➕ Adicionar selecionadas</button>
+      <button class="ghost" id="btn-limpar-adivinhadas">🗑️ Limpar lista</button>
+    </div>
+    <div class="status" id="status-adivinhadas"></div>
+  </section>
+
+ <div id="mode-single-content">
+  <section class="card" id="card-import">
+    <h2>1. Importar PDF</h2>
+    <p class="hint">Selecione um PDF com dados em tabela (nota, relatório de vendas etc.)</p>
+    <div class="drop" id="drop">
+      <p>Toque para escolher um arquivo, ou arraste aqui</p>
+      <label class="file-btn" for="file-input">📎 Escolher PDF</label>
+      <input type="file" id="file-input" accept="application/pdf">
+      <div class="filename" id="filename"></div>
+    </div>
+    <div class="status" id="status-import"></div>
+  </section>
+
+  <section class="card hidden" id="card-preview">
+    <h2>3. Pré-visualização</h2>
+    <div class="preview-meta">
+      <p class="hint" style="margin:0;">Dados extraídos e tratados</p>
+      <span class="count" id="preview-count"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="preview" id="preview-table"></table>
+    </div>
+  </section>
+
+  <section class="card hidden" id="card-export">
+    <h2>4. Exportar</h2>
+    <p class="hint">Excel e CSV usam exatamente os mesmos dados da pré-visualização.</p>
+    <div class="export-row">
+      <button class="export-btn xlsx" id="btn-xlsx">
+        <span class="ico">📊</span>
+        <span class="lbl">Exportar XLSX</span>
+        <span class="sub">.xlsx — Excel</span>
+      </button>
+      <button class="export-btn csv" id="btn-csv">
+        <span class="ico">📄</span>
+        <span class="lbl">Exportar CSV</span>
+        <span class="sub">UTF-8 · separador ;</span>
+      </button>
+    </div>
+    <div class="status" id="status-export"></div>
+    <button class="ghost" id="btn-abrir-modelo-single" style="width:100%; margin-top:10px;">🔄 Reabrir mapeamento do modelo</button>
+  </section>
+ </div>
+
+ <div id="mode-compare-content" class="hidden">
+  <section class="card" id="card-import-compare">
+    <h2>1. Importar os dois PDFs</h2>
+    <p class="hint">Um arquivo de cada período. A ordem não importa — o período mais recente é identificado pela coluna de data que você escolher a seguir.</p>
+    <div class="compare-grid">
+      <div class="compare-col">
+        <h3>Arquivo A</h3>
+        <div class="drop small" id="drop-a">
+          <p>Toque ou arraste</p>
+          <label class="file-btn" for="file-input-a">📎 Escolher PDF</label>
+          <input type="file" id="file-input-a" accept="application/pdf">
+          <div class="filename" id="filename-a"></div>
+        </div>
+      </div>
+      <div class="compare-col">
+        <h3>Arquivo B</h3>
+        <div class="drop small" id="drop-b">
+          <p>Toque ou arraste</p>
+          <label class="file-btn" for="file-input-b">📎 Escolher PDF</label>
+          <input type="file" id="file-input-b" accept="application/pdf">
+          <div class="filename" id="filename-b"></div>
+        </div>
+      </div>
+    </div>
+    <div class="status" id="status-import-compare"></div>
+  </section>
+
+  <section class="card hidden" id="card-map-compare">
+    <h2>2. Identificar as colunas</h2>
+    <p class="hint">Com base nos cabeçalhos extraídos dos dois arquivos.</p>
+    <div class="field">
+      <label for="sel-chave">Coluna que identifica o item (código/produto)</label>
+      <select id="sel-chave"></select>
+    </div>
+    <div class="field">
+      <label for="sel-periodo">Coluna de período/data</label>
+      <select id="sel-periodo"></select>
+    </div>
+    <div class="field">
+      <label for="sel-estoque">Coluna de quantidade em estoque</label>
+      <select id="sel-estoque"></select>
+    </div>
+    <div class="field">
+      <label for="sel-vendido">Coluna de quantidade vendida (VEN)</label>
+      <select id="sel-vendido"></select>
+    </div>
+    <div class="field">
+      <label for="sel-mais-recente">Qual arquivo é o período mais recente?</label>
+      <select id="sel-mais-recente">
+        <option value="A">Arquivo A</option>
+        <option value="B">Arquivo B</option>
+      </select>
+    </div>
+    <button class="primary" id="btn-comparar" style="width:100%;">Comparar</button>
+    <div class="status" id="status-map-compare"></div>
+  </section>
+
+  <section class="card hidden" id="card-preview-compare">
+    <h2>3. Pré-visualização da comparação</h2>
+    <div class="preview-meta">
+      <p class="hint" style="margin:0;">Estoque e vendido direto do arquivo mais recente (cada relatório já calcula o vendido no próprio período dele), mantendo os demais dados</p>
+      <span class="count" id="preview-count-compare"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="preview" id="preview-table-compare"></table>
+    </div>
+  </section>
+
+  <section class="card hidden" id="card-export-compare">
+    <h2>4. Exportar comparação</h2>
+    <p class="hint">Excel e CSV usam exatamente os mesmos dados da pré-visualização.</p>
+    <div class="export-row">
+      <button class="export-btn xlsx" id="btn-xlsx-compare">
+        <span class="ico">📊</span>
+        <span class="lbl">Exportar XLSX</span>
+        <span class="sub">.xlsx — Excel</span>
+      </button>
+      <button class="export-btn csv" id="btn-csv-compare">
+        <span class="ico">📄</span>
+        <span class="lbl">Exportar CSV</span>
+        <span class="sub">UTF-8 · separador ;</span>
+      </button>
+    </div>
+    <div class="status" id="status-export-compare"></div>
+    <button class="ghost" id="btn-abrir-modelo-compare" style="width:100%; margin-top:10px;">🔄 Reabrir mapeamento do modelo</button>
+  </section>
+ </div>
+
+  <section class="card hidden" id="card-modelo">
+    <h2>Modelo: Alteração de Preços</h2>
+    <p class="hint">A planilha no modelo "ALTERAR PÇ" é gerada e baixada automaticamente após a extração, usando o mapeamento sugerido abaixo. Se precisar corrigir alguma coluna, ajuste os campos e clique em "Gerar novamente".</p>
+
+    <div class="field">
+      <label for="modelo-periodo">Período verificado</label>
+      <select id="modelo-periodo"></select>
+    </div>
+    <div class="field">
+      <label for="modelo-loja">Loja Nº (texto livre)</label>
+      <input type="text" id="modelo-loja" placeholder="ex.: 01" style="width:100%; font-family:var(--sans); font-size:14px; padding:10px 12px; border:1px solid var(--line); border-radius:3px;">
+    </div>
+
+    <div class="field"><label for="modelo-marca">MARCA / LINHA</label><select id="modelo-marca"></select></div>
+    <div class="field"><label for="modelo-referencia">REFERÊNCIA</label><select id="modelo-referencia"></select></div>
+    <div class="field"><label for="modelo-tipo">TIPO</label><select id="modelo-tipo"></select></div>
+    <div class="field"><label for="modelo-ven">VEN (vendido)</label><select id="modelo-ven"></select></div>
+    <div class="field"><label for="modelo-est">EST (estoque)</label><select id="modelo-est"></select></div>
+    <div class="field"><label for="modelo-atual">ATUAL (preço atual)</label><select id="modelo-atual"></select></div>
+    <div class="field"><label for="modelo-sug">SUG. (preço sugerido)</label><select id="modelo-sug"></select></div>
+    <div class="field"><label for="modelo-junior">JÚNIOR</label><select id="modelo-junior"></select></div>
+    <div class="field"><label for="modelo-dataentrada">DATA ENTRADA</label><select id="modelo-dataentrada"></select></div>
+
+    <button class="primary" id="btn-gerar-modelo" style="width:100%;">Gerar novamente (após ajustar o mapeamento)</button>
+    <div class="status" id="status-modelo"></div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <button type="button" id="btn-instalar" class="primary" style="display:none; margin-bottom:12px;">📲 Instalar o app no aparelho</button>
+  <p id="dica-ios" style="display:none; margin-bottom:10px;">No iPhone/iPad: toque em Compartilhar e depois em "Adicionar à Tela de Início" para instalar.</p>
+  <p>Extração genérica por alinhamento de colunas. Layouts muito irregulares podem exigir ajustes.</p>
+</footer>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+const dropEl = document.getElementById('drop');
+const fileInput = document.getElementById('file-input');
+const filenameEl = document.getElementById('filename');
+const statusImport = document.getElementById('status-import');
+const cardPreview = document.getElementById('card-preview');
+const cardExport = document.getElementById('card-export');
+const previewTable = document.getElementById('preview-table');
+const previewCount = document.getElementById('preview-count');
+const statusExport = document.getElementById('status-export');
+const steps = document.querySelectorAll('.step');
+
+let dadosTratados = null; // { colunas: [...], registros: [{...}] }
+let periodoVerificadoDetectado = '';
+let nomeBase = 'dados_extraidos';
+
+// ---------- MODO (único vs comparação) ----------
+const tabSingle = document.getElementById('tab-single');
+const tabCompare = document.getElementById('tab-compare');
+const modeSingleContent = document.getElementById('mode-single-content');
+const modeCompareContent = document.getElementById('mode-compare-content');
+const stepsSingle = document.getElementById('steps-single');
+
+tabSingle.addEventListener('click', ()=>{
+  tabSingle.classList.add('active'); tabCompare.classList.remove('active');
+  modeSingleContent.classList.remove('hidden'); modeCompareContent.classList.add('hidden');
+  stepsSingle.classList.remove('hidden');
+});
+tabCompare.addEventListener('click', ()=>{
+  tabCompare.classList.add('active'); tabSingle.classList.remove('active');
+  modeCompareContent.classList.remove('hidden'); modeSingleContent.classList.add('hidden');
+  stepsSingle.classList.add('hidden');
+});
+
+// ---------- COMPARAÇÃO: estado ----------
+const dropA = document.getElementById('drop-a');
+const dropB = document.getElementById('drop-b');
+const fileInputA = document.getElementById('file-input-a');
+const fileInputB = document.getElementById('file-input-b');
+const filenameA = document.getElementById('filename-a');
+const filenameB = document.getElementById('filename-b');
+const statusImportCompare = document.getElementById('status-import-compare');
+const cardMapCompare = document.getElementById('card-map-compare');
+const cardPreviewCompare = document.getElementById('card-preview-compare');
+const cardExportCompare = document.getElementById('card-export-compare');
+const previewTableCompare = document.getElementById('preview-table-compare');
+const previewCountCompare = document.getElementById('preview-count-compare');
+const statusMapCompare = document.getElementById('status-map-compare');
+const statusExportCompare = document.getElementById('status-export-compare');
+const selChave = document.getElementById('sel-chave');
+const selPeriodo = document.getElementById('sel-periodo');
+const selEstoque = document.getElementById('sel-estoque');
+const selVendido = document.getElementById('sel-vendido');
+const selMaisRecente = document.getElementById('sel-mais-recente');
+
+let dadosA = null; // { colunas, registros }
+let dadosB = null;
+let nomeBaseA = 'arquivo_a';
+let nomeBaseB = 'arquivo_b';
+let periodoVerificadoA = '';
+let periodoVerificadoB = '';
+let resultadoComparacao = null; // { colunas, registros }
+let nomeBaseComparacao = 'comparacao';
+let periodoVerificadoComparacao = '';
+
+function setupDropZone(dropEl, inputEl, onFile){
+  ['dragenter','dragover'].forEach(ev=>{
+    dropEl.addEventListener(ev, e=>{ e.preventDefault(); dropEl.classList.add('dragover'); });
+  });
+  ['dragleave','drop'].forEach(ev=>{
+    dropEl.addEventListener(ev, e=>{ e.preventDefault(); dropEl.classList.remove('dragover'); });
+  });
+  dropEl.addEventListener('drop', e=>{
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) onFile(f);
+  });
+  inputEl.addEventListener('change', e=>{
+    const f = e.target.files && e.target.files[0];
+    if(f) onFile(f);
+  });
+}
+
+async function extrairArquivoCompare(file, filenameEl, label){
+  if(!file.name.toLowerCase().endsWith('.pdf')){
+    setStatus(statusImportCompare, `O arquivo ${label} não é um .pdf`, 'err');
+    return null;
+  }
+  filenameEl.textContent = file.name;
+  setStatus(statusImportCompare, `Extraindo ${label}…`);
+  try{
+    const buffer = await file.arrayBuffer();
+    const bruto = await extrairDadosPdf(buffer);
+    const resultado = extrairEProcessar(bruto);
+    const tratado = resultado.dados;
+    if(tratado.registros.length === 0){
+      setStatus(statusImportCompare, `Nenhum registro válido encontrado no arquivo ${label}.`, 'err');
+      return null;
+    }
+    if(resultado.modo !== 'tabela'){
+      setStatus(statusImportCompare, `Arquivo ${label}: colunas coladas — usei o modo "${resultado.modo}" de extração.`, 'ok');
+    }
+    return {
+      tratado,
+      nomeBase: sanitizarNomeArquivo(file.name.replace(/\.pdf$/i,'')),
+      periodoVerificado: resultado.periodoVerificado || '',
+    };
+  }catch(err){
+    console.error(err);
+    setStatus(statusImportCompare, `Erro ao processar o arquivo ${label}: ` + err.message, 'err');
+    return null;
+  }
+}
+
+function checarAmbosArquivosProntos(){
+  if(!dadosA || !dadosB) return;
+  setStatus(statusImportCompare, 'Os dois arquivos foram extraídos.', 'ok');
+  popularSelectsComparacao();
+  cardMapCompare.classList.remove('hidden');
+}
+
+function popularSelectsComparacao(){
+  // usa a interseção das colunas dos dois arquivos; se vazia, usa as colunas de A
+  const colsA = dadosA.colunas;
+  const colsB = new Set(dadosB.colunas);
+  let colunasComuns = colsA.filter(c => colsB.has(c));
+  if(colunasComuns.length === 0) colunasComuns = colsA;
+
+  const opcoesVazias = '<option value="">— selecione —</option>';
+  const opcoesColunas = opcoesVazias + colunasComuns.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  [selChave, selPeriodo, selEstoque, selVendido].forEach(sel=>{
+    sel.innerHTML = opcoesColunas;
+  });
+
+  // tenta pré-selecionar por nome provável (termos específicos primeiro, depois abreviações curtas)
+  preselecionar(selPeriodo, ['período','periodo','data entrada','entrada','mês','mes']);
+  preselecionar(selEstoque, ['estoque atualizado','estoque','quantidade','saldo']);
+  preselecionar(selVendido, ['vendido','vend','ven']);
+  preselecionar(selChave, ['código','codigo','cod','referência','referencia','item','produto','descrição','descricao']);
+
+  if(!selEstoque.value) preselecionar(selEstoque, ['est']);
+  if(!selPeriodo.value) preselecionar(selPeriodo, ['data']);
+}
+
+function preselecionar(sel, termos){
+  const opt = Array.from(sel.options).find(o => termos.some(t => o.value.toLowerCase().includes(t)));
+  if(opt) sel.value = opt.value;
+}
+
+setupDropZone(dropA, fileInputA, async (f)=>{
+  const r = await extrairArquivoCompare(f, filenameA, 'A');
+  if(r){ dadosA = r.tratado; nomeBaseA = r.nomeBase; periodoVerificadoA = r.periodoVerificado; checarAmbosArquivosProntos(); }
+});
+setupDropZone(dropB, fileInputB, async (f)=>{
+  const r = await extrairArquivoCompare(f, filenameB, 'B');
+  if(r){ dadosB = r.tratado; nomeBaseB = r.nomeBase; periodoVerificadoB = r.periodoVerificado; checarAmbosArquivosProntos(); }
+});
+
+// ---------- comparação: tentativa de parse de data (para sugerir o mais recente) ----------
+function tentarParseData(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(m){
+    let [_, d, mo, y] = m;
+    if(y.length === 2) y = '20'+y;
+    const dt = new Date(+y, +mo-1, +d);
+    if(!isNaN(dt)) return dt;
+  }
+  m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  if(m){
+    const dt = new Date(+m[1], +m[2]-1, +m[3]);
+    if(!isNaN(dt)) return dt;
+  }
+  m = s.match(/^(\d{1,2})[\/\-.](\d{4})$/);
+  if(m){
+    const dt = new Date(+m[2], +m[1]-1, 1);
+    if(!isNaN(dt)) return dt;
+  }
+  return null;
+}
+
+function sugerirMaisRecente(){
+  const colPeriodo = selPeriodo.value;
+  if(!colPeriodo || !dadosA || !dadosB) return;
+  const pegaData = (dados)=>{
+    for(const r of dados.registros){
+      const dt = tentarParseData(r[colPeriodo]);
+      if(dt) return dt;
+    }
+    return null;
+  };
+  const dtA = pegaData(dadosA);
+  const dtB = pegaData(dadosB);
+  if(dtA && dtB){
+    selMaisRecente.value = dtB > dtA ? 'B' : 'A';
+  }
+}
+selPeriodo.addEventListener('change', sugerirMaisRecente);
+
+// ---------- comparação: merge ----------
+function converterNumero(v){
+  if(v === null || v === undefined) return null;
+  const s = String(v).trim().replace(/\./g,'').replace(',', '.');
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+function compararArquivos(){
+  const colChave = selChave.value;
+  const colPeriodo = selPeriodo.value;
+  const colEstoque = selEstoque.value;
+  const colVendido = selVendido.value;
+  if(!colChave || !colPeriodo || !colEstoque || !colVendido){
+    setStatus(statusMapCompare, 'Selecione as quatro colunas antes de comparar.', 'err');
+    return;
+  }
+
+  const recenteEhB = selMaisRecente.value === 'B';
+  const dadosRecente = recenteEhB ? dadosB : dadosA;
+  const dadosAnterior = recenteEhB ? dadosA : dadosB;
+  const periodoVerificadoRecente = recenteEhB ? periodoVerificadoB : periodoVerificadoA;
+
+  // ano do período verificado do arquivo recente (pega o último ano de 4 dígitos do texto,
+  // que é o mais recente quando o período vem como "dd/mm/aaaa a dd/mm/aaaa")
+  function extrairAno(texto){
+    if(!texto) return null;
+    const anos = String(texto).match(/\d{4}/g);
+    return anos && anos.length ? anos[anos.length-1] : null;
+  }
+  const anoRecente = extrairAno(periodoVerificadoRecente);
+
+  const mapaAnterior = new Map();
+  dadosAnterior.registros.forEach(r=>{
+    const chave = r[colChave];
+    if(chave) mapaAnterior.set(chave, r);
+  });
+
+  // mantém as colunas originais do arquivo mais recente. EST fica como está (foto do estoque atual).
+  // VEN também fica como está no arquivo recente — cada relatório já calcula o vendido só dentro do
+  // próprio período declarado no cabeçalho dele, então NÃO se subtrai o VEN de um arquivo do outro
+  // (isso pode até dar número negativo, já que o período do arquivo mais antigo pode ser bem maior).
+  // Exceção: se o VEN do item for EXATAMENTE igual ao do arquivo anterior, é sinal de que não
+  // vendeu nada de novo desde então — nesse caso mostra 0 em vez de repetir o valor antigo.
+  // Essa exceção NÃO vale pra itens cuja DATA ENTRADA é do mesmo ano do período recente
+  // (mercadoria do ano corrente sempre mantém o vendido/estoque como estão, sem zerar).
+  const colunasBase = dadosRecente.colunas.slice();
+  const colunasExtra = ['Situação', 'Período Anterior', 'Estoque Anterior', 'Vendido Anterior'];
+  const colunasFinal = colunasBase.concat(colunasExtra.filter(c => !colunasBase.includes(c)));
+
+  const registros = [];
+  const chavesVistas = new Set();
+
+  dadosRecente.registros.forEach(rRecente=>{
+    const chave = rRecente[colChave];
+    chavesVistas.add(chave);
+    const rAnterior = mapaAnterior.get(chave);
+
+    const registro = {};
+    colunasBase.forEach(c => registro[c] = rRecente[c] ?? '');
+
+    if(rAnterior){
+      const anoItem = extrairAno(rRecente[colPeriodo]);
+      const mesmoAnoDoRecente = anoRecente && anoItem && anoItem === anoRecente;
+      const vendidoRecenteNum = converterNumero(rRecente[colVendido]);
+      const vendidoAnteriorNum = converterNumero(rAnterior[colVendido]);
+      if(!mesmoAnoDoRecente && vendidoRecenteNum !== null && vendidoAnteriorNum !== null && vendidoRecenteNum === vendidoAnteriorNum){
+        registro[colVendido] = '0';
+      }
+      // se for do mesmo ano, ou se for diferente do anterior, mantém o valor original do
+      // arquivo recente (já preenchido acima)
+    }
+
+    registro['Situação'] = rAnterior ? '' : 'item novo';
+    registro['Período Anterior'] = rAnterior ? (rAnterior[colPeriodo] ?? '') : '';
+    registro['Estoque Anterior'] = rAnterior ? (rAnterior[colEstoque] ?? '') : '';
+    registro['Vendido Anterior'] = rAnterior ? (rAnterior[colVendido] ?? '') : '';
+    registros.push(registro);
+  });
+
+  // itens que só existiam no período anterior (não aparecem mais no mais recente) — não vendeu no
+  // período recente porque nem está mais no catálogo, então o vendido sai zerado
+  dadosAnterior.registros.forEach(rAnterior=>{
+    const chave = rAnterior[colChave];
+    if(chavesVistas.has(chave)) return;
+    const registro = {};
+    colunasBase.forEach(c => registro[c] = rAnterior[c] ?? '');
+    registro[colVendido] = '0';
+    registro['Situação'] = 'item removido';
+    registro['Período Anterior'] = rAnterior[colPeriodo] ?? '';
+    registro['Estoque Anterior'] = rAnterior[colEstoque] ?? '';
+    registro['Vendido Anterior'] = rAnterior[colVendido] ?? '';
+    registros.push(registro);
+  });
+
+  // remove linhas onde vendido E estoque ficaram zerados ao mesmo tempo (item parado, sem
+  // movimento e sem estoque — não é útil pra análise de alteração de preços)
+  const registrosFiltrados = registros.filter(r=>{
+    const vendidoNum = converterNumero(r[colVendido]);
+    const estoqueNum = converterNumero(r[colEstoque]);
+    const ambosZerados = vendidoNum === 0 && estoqueNum === 0;
+    return !ambosZerados;
+  });
+  const removidosPorZerado = registros.length - registrosFiltrados.length;
+
+  resultadoComparacao = { colunas: colunasFinal, registros: registrosFiltrados };
+  nomeBaseComparacao = nomeBaseA + '_vs_' + nomeBaseB;
+  periodoVerificadoComparacao = periodoVerificadoRecente;
+
+  renderPreviewCompare(resultadoComparacao);
+  cardPreviewCompare.classList.remove('hidden');
+  cardExportCompare.classList.remove('hidden');
+  const msgZerados = removidosPorZerado > 0 ? ` ${removidosPorZerado} item(ns) com vendido e estoque zerados foram excluídos.` : '';
+  setStatus(statusMapCompare, `Comparação concluída (período mais recente: Arquivo ${selMaisRecente.value}).${msgZerados}`, 'ok');
+  abrirCardModelo('compare');
+}
+
+document.getElementById('btn-comparar').addEventListener('click', compararArquivos);
+
+function renderPreviewCompare(dados){
+  const { colunas, registros } = dados;
+  previewCountCompare.textContent = `${colunas.length} coluna(s) · ${registros.length} registro(s)`;
+
+  const limite = 30;
+  let html = '<thead><tr>' + colunas.map(c=>`<th>${escapeHtml(c)}</th>`).join('') + '</tr></thead><tbody>';
+  registros.slice(0, limite).forEach(r=>{
+    html += '<tr>' + colunas.map(c=>`<td>${escapeHtml(r[c])}</td>`).join('') + '</tr>';
+  });
+  html += '</tbody>';
+  previewTableCompare.innerHTML = html;
+
+  const existingMore = previewTableCompare.parentElement.querySelector('.more-rows');
+  if(existingMore) existingMore.remove();
+  if(registros.length > limite){
+    const extra = document.createElement('div');
+    extra.className = 'more-rows';
+    extra.textContent = `… +${registros.length - limite} registro(s) não exibido(s) na prévia (a exportação inclui todos)`;
+    previewTableCompare.parentElement.appendChild(extra);
+  }
+}
+
+document.getElementById('btn-xlsx-compare').addEventListener('click', ()=>{
+  if(!resultadoComparacao) return;
+  try{
+    const { colunas, registros } = resultadoComparacao;
+    const aoa = [colunas, ...registros.map(r => colunas.map(c => r[c] ?? ''))];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    registros.forEach((r, rowIdx)=>{
+      colunas.forEach((c, colIdx)=>{
+        const val = r[c] ?? '';
+        if(parecceCodigoComZero(val)){
+          const addr = XLSX.utils.encode_cell({r: rowIdx+1, c: colIdx});
+          if(ws[addr]){ ws[addr].t = 's'; ws[addr].z = '@'; }
+        }
+      });
+    });
+    ws['!cols'] = colunas.map(c => ({ wch: Math.max(c.length, 12) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Comparação');
+    XLSX.writeFile(wb, nomeBaseComparacao + '.xlsx');
+    setStatus(statusExportCompare, `XLSX gerado: ${nomeBaseComparacao}.xlsx`, 'ok');
+  }catch(err){
+    console.error(err);
+    setStatus(statusExportCompare, 'Erro ao gerar XLSX: ' + err.message, 'err');
+  }
+});
+
+document.getElementById('btn-csv-compare').addEventListener('click', ()=>{
+  if(!resultadoComparacao) return;
+  try{
+    const { colunas, registros } = resultadoComparacao;
+    const linhas = [colunas, ...registros.map(r => colunas.map(c => r[c] ?? ''))];
+    const csv = linhas.map(linha =>
+      linha.map(campo => {
+        let v = String(campo ?? '');
+        if(/[";\n\r]/.test(v)){
+          v = '"' + v.replace(/"/g, '""') + '"';
+        }
+        return v;
+      }).join(';')
+    ).join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    baixarBlob(blob, nomeBaseComparacao + '.csv');
+    setStatus(statusExportCompare, `CSV gerado: ${nomeBaseComparacao}.csv`, 'ok');
+  }catch(err){
+    console.error(err);
+    setStatus(statusExportCompare, 'Erro ao gerar CSV: ' + err.message, 'err');
+  }
+});
+
+// ---------- MODELO: Alteração de Preços ----------
+const MODELO_COLUNAS = ['MARCA / LINHA','REFERÊNCIA','TIPO','VEN','EST','ATUAL','SUG.','JÚNIOR',' DATA ENTRADA'];
+const MODELO_LARGURAS = [27.14,24.57,13.86,11.43,11.43,16.71,14.14,17.57,28.43];
+const cardModelo = document.getElementById('card-modelo');
+const statusModelo = document.getElementById('status-modelo');
+const modeloLojaInput = document.getElementById('modelo-loja');
+const modeloSelects = {
+  periodo: document.getElementById('modelo-periodo'),
+  marca: document.getElementById('modelo-marca'),
+  referencia: document.getElementById('modelo-referencia'),
+  tipo: document.getElementById('modelo-tipo'),
+  ven: document.getElementById('modelo-ven'),
+  est: document.getElementById('modelo-est'),
+  atual: document.getElementById('modelo-atual'),
+  sug: document.getElementById('modelo-sug'),
+  junior: document.getElementById('modelo-junior'),
+  dataentrada: document.getElementById('modelo-dataentrada'),
+};
+let sourceModelo = 'single'; // 'single' | 'compare'
+
+function abrirCardModelo(origem){
+  sourceModelo = origem;
+  const dados = origem === 'compare' ? resultadoComparacao : dadosTratados;
+  if(!dados){ return; }
+  const opcoesVazias = '<option value="">— não mapear —</option>';
+  const opcoesColunas = opcoesVazias + dados.colunas.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+  Object.values(modeloSelects).forEach(sel => sel.innerHTML = opcoesColunas);
+
+  preselecionar(modeloSelects.periodo, ['período','periodo','mês','mes']);
+  preselecionar(modeloSelects.marca, ['marca','linha']);
+  preselecionar(modeloSelects.referencia, ['referência','referencia','código','codigo','cod']);
+  preselecionar(modeloSelects.tipo, ['tipo']);
+  preselecionar(modeloSelects.est, ['estoque atualizado','estoque','est']);
+  preselecionar(modeloSelects.atual, ['atual','preço atual','preco atual']);
+  preselecionar(modeloSelects.sug, ['sugerido','sug']);
+  preselecionar(modeloSelects.dataentrada, ['data entrada','entrada','data']);
+  preselecionar(modeloSelects.junior, ['júnior','junior']);
+
+  // modo sequencial: não há marca/referência/tipo separados — usa a descrição inteira em MARCA/LINHA
+  if(!modeloSelects.marca.value){
+    preselecionar(modeloSelects.marca, ['descrição','descricao']);
+  }
+  if(!modeloSelects.periodo.value){
+    preselecionar(modeloSelects.periodo, ['data']);
+  }
+
+  preselecionar(modeloSelects.ven, ['vendido','vend','ven']);
+
+  setStatus(statusModelo, '', '');
+  cardModelo.classList.remove('hidden');
+  cardModelo.scrollIntoView({behavior:'smooth', block:'start'});
+  gerarPlanilhaModelo();
+}
+
+document.getElementById('btn-abrir-modelo-single').addEventListener('click', ()=>{
+  if(!dadosTratados){ return; }
+  abrirCardModelo('single');
+});
+document.getElementById('btn-abrir-modelo-compare').addEventListener('click', ()=>{
+  if(!resultadoComparacao){ return; }
+  abrirCardModelo('compare');
+});
+
+// Catálogos muito grandes podem estourar a memória do navegador ao gerar um único Excel gigante
+// (mais comum no celular) — nesse caso, avisa o usuário mas continua gerando um arquivo único.
+const LIMITE_AVISO_CATALOGO_GRANDE = 8000;
+
+function montarCabecalhoModeloAoa(periodoValor, lojaValor){
+  return [
+    ['A/C Informática','','','','','','','',''],
+    ['','','','','','','','',''],
+    ['LEVANTAMENTO DE MERCADORIAS (ALTERAÇÕES DE PREÇOS).','','','','','','','',''],
+    ['PERIODO VERIFICADO: ' + periodoValor,'','','','','','','',''],
+    ['LOJA Nº: ' + lojaValor,'','','QUANTIDADES','','PREÇOS','','','OBSERVAÇÕES'],
+    MODELO_COLUNAS,
+  ];
+}
+
+function gerarArquivoModelo(registrosParte, mapa, periodoValor, lojaValor, nomeArquivo){
+  const aoa = montarCabecalhoModeloAoa(periodoValor, lojaValor);
+  registrosParte.forEach(r=>{
+    aoa.push(MODELO_COLUNAS.map(mc => {
+      const colOrigem = mapa[mc];
+      return colOrigem ? (r[colOrigem] ?? '') : '';
+    }));
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges'] = [
+    {s:{r:0,c:0}, e:{r:0,c:8}},
+    {s:{r:1,c:0}, e:{r:1,c:8}},
+    {s:{r:2,c:0}, e:{r:2,c:8}},
+    {s:{r:3,c:0}, e:{r:3,c:8}},
+    {s:{r:4,c:3}, e:{r:4,c:4}}, // QUANTIDADES
+    {s:{r:4,c:5}, e:{r:4,c:7}}, // PREÇOS
+  ];
+  ws['!cols'] = MODELO_LARGURAS.map(w=>({wch:w}));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'ALTERAR PÇ');
+  XLSX.writeFile(wb, nomeArquivo);
+}
+
+function gerarPlanilhaModelo(){
+  try{
+    const dados = sourceModelo === 'compare' ? resultadoComparacao : dadosTratados;
+    if(!dados){ setStatus(statusModelo, 'Nenhum dado disponível.', 'err'); return; }
+
+    const mapa = {
+      'MARCA / LINHA': modeloSelects.marca.value,
+      'REFERÊNCIA': modeloSelects.referencia.value,
+      'TIPO': modeloSelects.tipo.value,
+      'VEN': modeloSelects.ven.value,
+      'EST': modeloSelects.est.value,
+      'ATUAL': modeloSelects.atual.value,
+      'SUG.': modeloSelects.sug.value,
+      'JÚNIOR': modeloSelects.junior.value,
+      ' DATA ENTRADA': modeloSelects.dataentrada.value,
+    };
+    const periodoDetectado = sourceModelo === 'compare' ? periodoVerificadoComparacao : periodoVerificadoDetectado;
+    const colPeriodo = modeloSelects.periodo.value;
+    const periodoValor = periodoDetectado
+      ? periodoDetectado
+      : (colPeriodo && dados.registros.length ? (dados.registros[0][colPeriodo] || '') : '');
+    const lojaValor = modeloLojaInput.value.trim();
+    const nomeBaseSaida = (sourceModelo === 'compare' ? nomeBaseComparacao : nomeBase) + '_modelo_alteracao_precos';
+
+    const avisoTamanho = dados.registros.length > LIMITE_AVISO_CATALOGO_GRANDE
+      ? ` Catálogo grande (${dados.registros.length} itens) — se travar no celular, tente exportar em CSV ou usar um computador.`
+      : '';
+
+    gerarArquivoModelo(dados.registros, mapa, periodoValor, lojaValor, nomeBaseSaida + '.xlsx');
+    setStatus(statusModelo, `Planilha gerada automaticamente: ${nomeBaseSaida}.xlsx${avisoTamanho}`, 'ok');
+  }catch(err){
+    console.error(err);
+    setStatus(statusModelo, 'Erro ao gerar a planilha: ' + err.message + '. Para catálogos muito grandes, tente exportar em CSV ou usar um computador.', 'err');
+  }
+}
+
+document.getElementById('btn-gerar-modelo').addEventListener('click', gerarPlanilhaModelo);
+
+function setStep(n){
+  steps.forEach(s=>{
+    const idx = parseInt(s.dataset.step,10);
+    s.classList.toggle('active', idx===n);
+    s.classList.toggle('done', idx<n);
+  });
+}
+
+function setStatus(el, msg, type){
+  el.textContent = msg;
+  el.className = 'status' + (type ? ' '+type : '');
+}
+
+// ---------- drag & drop ----------
+['dragenter','dragover'].forEach(ev=>{
+  dropEl.addEventListener(ev, e=>{ e.preventDefault(); dropEl.classList.add('dragover'); });
+});
+['dragleave','drop'].forEach(ev=>{
+  dropEl.addEventListener(ev, e=>{ e.preventDefault(); dropEl.classList.remove('dragover'); });
+});
+dropEl.addEventListener('drop', e=>{
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) handleFile(f);
+});
+fileInput.addEventListener('change', e=>{
+  const f = e.target.files && e.target.files[0];
+  if(f) handleFile(f);
+});
+
+function sanitizarNomeArquivo(nome){
+  let n = nome.replace(/[\\/*?:"<>|]/g, '_').trim().replace(/\.+$/,'');
+  return n || 'extracao';
+}
+
+async function handleFile(file){
+  if(!file.name.toLowerCase().endsWith('.pdf')){
+    setStatus(statusImport, 'O arquivo selecionado não é um .pdf', 'err');
+    return;
+  }
+  filenameEl.textContent = file.name;
+  nomeBase = sanitizarNomeArquivo(file.name.replace(/\.pdf$/i,''));
+  setStatus(statusImport, 'Importando…');
+  cardPreview.classList.add('hidden');
+  cardExport.classList.add('hidden');
+  setStep(1);
+
+  try{
+    const buffer = await file.arrayBuffer();
+    setStatus(statusImport, 'Extraindo dados do PDF…');
+    setStep(2);
+    const bruto = await extrairDadosPdf(buffer);
+
+    const resultado = extrairEProcessar(bruto);
+    dadosTratados = resultado.dados;
+    periodoVerificadoDetectado = resultado.periodoVerificado || '';
+
+    if(dadosTratados.registros.length === 0){
+      setStatus(statusImport, 'Nenhum registro válido foi encontrado após o tratamento.', 'err');
+      return;
+    }
+
+    const msgModo = resultado.modo === 'sequencial'
+      ? ' As colunas do PDF estavam muito coladas, então usei o modo sequencial (descrição + valores em linhas separadas).'
+      : resultado.modo === 'linha-única'
+      ? ' As colunas do PDF não têm posição fixa, então usei o modo linha única (descrição + valores identificados no fim da linha).'
+      : '';
+    setStatus(statusImport, `Extração concluída. ${bruto.linhas.length} linha(s) bruta(s) encontrada(s).${msgModo}`, 'ok');
+
+    renderPreview(dadosTratados);
+    cardPreview.classList.remove('hidden');
+    cardExport.classList.remove('hidden');
+    setStep(4);
+    abrirCardModelo('single');
+  }catch(err){
+    console.error(err);
+    setStatus(statusImport, 'Erro ao processar o PDF: ' + err.message, 'err');
+  }
+}
+
+// ---------- EXTRAÇÃO (extractor) ----------
+// Detecta o período verificado a partir do texto do cabeçalho do relatório — procura primeiro o
+// padrão "V dd/mm/aaaa a dd/mm/aaaa" (relatórios de vendas), e só depois "PERIODO VERIFICADO: ..."
+// (modelo ALTERAR PÇ), pra não depender de adivinhar por uma coluna de data dos itens.
+function detectarPeriodoVerificado(textosLinha){
+  for(const txt of textosLinha){
+    const m = txt.match(/^V\s+(\d{1,2}\/\d{1,2}\/\d{2,4}\s+a\s+\d{1,2}\/\d{1,2}\/\d{2,4})/i);
+    if(m) return m[1].trim();
+  }
+  for(const txt of textosLinha){
+    const m = txt.match(/PERIODO\s+VERIFICADO:?\s*(.+)/i);
+    if(m && m[1].trim()) return m[1].trim();
+  }
+  return '';
+}
+
+async function extrairDadosPdf(arrayBuffer){
+  const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  if(pdf.numPages === 0) throw new Error('O PDF não contém páginas.');
+
+  // ---- 1) lê cada página separadamente, agrupando itens em linhas por proximidade de y ----
+  const paginas = []; // paginas[p] = [{y, items:[{x,text}]}]
+  for(let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const itens = content.items
+      .filter(it => it.str && it.str.trim() !== '')
+      .map(it => ({ x: it.transform[4], y: it.transform[5], text: it.str }));
+
+    itens.sort((a,b)=> b.y - a.y || a.x - b.x);
+    const linhasPagina = [];
+    let linhaAtual = null;
+    for(const it of itens){
+      if(!linhaAtual || Math.abs(linhaAtual.y - it.y) > 3){
+        linhaAtual = { y: it.y, items: [] };
+        linhasPagina.push(linhaAtual);
+      }
+      linhaAtual.items.push(it);
+    }
+    paginas.push(linhasPagina.filter(l => l.items.length > 0));
+  }
+
+  const textoLinha = l => l.items.slice().sort((a,b)=>a.x-b.x).map(it=>it.text).join(' ').trim();
+
+  // ---- 2) detecta layout "multi-bloco": PDFs impressos de planilhas largas repetem um banner
+  // ("A/C Informática ...") no início de cada grupo de páginas, um grupo por conjunto de colunas ----
+  const ehBannerInicio = pagina => pagina.length > 0 && /^A\/C\s*Inform/i.test(textoLinha(pagina[0]));
+  const totalPaginasComBanner = paginas.filter(ehBannerInicio).length;
+
+  if(totalPaginasComBanner >= 2){
+    const resultado = extrairMultiBloco(paginas, ehBannerInicio, textoLinha);
+    if(resultado && resultado.linhas.length > 0){
+      if(!resultado.periodoVerificado){
+        const textosTodasPaginas = [];
+        paginas.forEach(p => p.forEach(l => textosTodasPaginas.push(textoLinha(l))));
+        resultado.periodoVerificado = detectarPeriodoVerificado(textosTodasPaginas);
+      }
+      return resultado;
+    }
+    // se o multi-bloco não gerou nada útil, cai pro modo padrão abaixo
+  }
+
+  // ---- 3) modo padrão: trata o PDF inteiro como uma única tabela contínua ----
+  const todasLinhas = [];
+  paginas.forEach(linhasPagina => linhasPagina.forEach(l => todasLinhas.push(l)));
+  if(todasLinhas.length < 2){
+    throw new Error('Não foi possível identificar linhas de dados no PDF.');
+  }
+
+  // pula linhas de metadado do relatório (número de página, "Pag:", intervalo "V dd/mm/aaaa a
+  // dd/mm/aaaa", separador de traços) antes de escolher a linha de cabeçalho real da tabela —
+  // sem isso, essas linhas podem virar um "cabeçalho" falso e confundir a extração por coluna.
+  const METADADO_RELATORIO_RE = /^(\d+\s*Pag:|Pag:|V\s+\d{1,2}\/\d{1,2}\/\d{2,4}|Em:\s*\d{1,2}\/\d{1,2}\/\d{2,4}|-{5,}$)/i;
+  let inicioTabela = 0;
+  while(inicioTabela < todasLinhas.length && METADADO_RELATORIO_RE.test(textoLinha(todasLinhas[inicioTabela]))){
+    inicioTabela++;
+  }
+  if(inicioTabela >= todasLinhas.length - 1) inicioTabela = 0; // segurança: se pulou tudo, volta ao início
+
+  // se a linha candidata a cabeçalho já parece um item de dado (tem preço ou data em algum lugar
+  // do texto), esse relatório não tem cabeçalho de tabela nenhum — não dá pra montar âncoras de
+  // coluna com ela. Checamos o TEXTO DA LINHA JÁ JUNTADO (não item por item): dependendo do PDF, o
+  // pdf.js pode agrupar várias palavras da linha — até preço e data — num único "item" de texto, o
+  // que faria uma checagem item-a-item com regex ancorada (^...$) nunca bater.
+  const linhaCandidata = todasLinhas[inicioTabela];
+  const textoCandidata = textoLinha(linhaCandidata);
+  const pareceItemDeDados = /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(textoCandidata) || /\d+[.,]\d{2}(\D|$)/.test(textoCandidata);
+
+  let cabecalho, linhas;
+  if(pareceItemDeDados){
+    cabecalho = [''];
+    linhas = [];
+  } else {
+    const linhaCabecalho = linhaCandidata;
+    const ancoras = linhaCabecalho.items.map(it => it.x).sort((a,b)=>a-b);
+
+    const atribuirColuna = (x) => {
+      let melhor = 0, menorDist = Infinity;
+      ancoras.forEach((ax, i) => {
+        const d = Math.abs(ax - x);
+        if(d < menorDist){ menorDist = d; melhor = i; }
+      });
+      return melhor;
+    };
+
+    cabecalho = linhaCabecalho.items
+      .sort((a,b)=>a.x-b.x)
+      .map(it => it.text.trim());
+
+    linhas = [];
+    for(let i=inicioTabela+1; i<todasLinhas.length; i++){
+      const linha = todasLinhas[i];
+      const colunas = new Array(cabecalho.length).fill('');
+      linha.items.forEach(it=>{
+        const idx = atribuirColuna(it.x);
+        colunas[idx] = (colunas[idx] ? colunas[idx] + ' ' : '') + it.text;
+      });
+      linhas.push(colunas);
+    }
+  }
+
+  const linhasBrutas = todasLinhas.map(l =>
+    l.items.slice().sort((a,b)=>a.x-b.x).map(it=>it.text).join(' ').replace(/\s{2,}/g,' ').trim()
+  );
+
+  const periodoVerificado = detectarPeriodoVerificado(linhasBrutas);
+
+  return { cabecalho, linhas, linhasBrutas, periodoVerificado };
+}
+
+// Junta um único grupo de linhas de texto (cabeçalho + dados) em colunas por posição x,
+// mesclando tokens de cabeçalho muito próximos entre si (ex.: "MARCA" "/" "LINHA" -> uma coluna só).
+function extrairTabelaDeLinhas(linhasFlat, indiceInicial){
+  const LIMIAR_MESCLA = 45;
+  const cabecalhoLinha = linhasFlat[indiceInicial];
+  const itensOrdenados = cabecalhoLinha.items.slice().sort((a,b)=>a.x-b.x);
+
+  const grupos = [];
+  itensOrdenados.forEach(it=>{
+    const ultimo = grupos[grupos.length-1];
+    if(ultimo && (it.x - ultimo.xUltimo) < LIMIAR_MESCLA){
+      ultimo.texto += ' ' + it.text;
+      ultimo.xUltimo = it.x;
+    } else {
+      grupos.push({ xAncora: it.x, xUltimo: it.x, texto: it.text });
+    }
+  });
+
+  const ancoras = grupos.map(g => g.xAncora);
+  const cabecalho = grupos.map(g => g.texto.trim());
+
+  function atribuirColuna(x){
+    let melhor = 0, menorDist = Infinity;
+    ancoras.forEach((ax, idx) => {
+      const d = Math.abs(ax - x);
+      if(d < menorDist){ menorDist = d; melhor = idx; }
+    });
+    return melhor;
+  }
+
+  return { cabecalho, ancoras, atribuirColuna };
+}
+
+// Extrai um PDF onde uma planilha larga foi impressa em grupos de páginas (cada grupo com um
+// subconjunto de colunas), repetindo o banner "A/C Informática ..." no início de cada grupo.
+// Junta os grupos usando a posição (página relativa + altura da linha) como chave — não pela
+// ordem sequencial — porque uma linha pode faltar em um grupo (ex.: item sem data preenchida)
+// e isso desalinharia tudo se fosse por índice simples.
+function extrairMultiBloco(paginas, ehBannerInicio, textoLinha){
+  const BANNER_RE = /^(A\/C\s*Inform|LEVANTAMENTO|PERIODO VERIFICADO|LOJA)/i;
+  const GRUPO_RE = /^(QUANTIDADES|PREÇOS|OBSERVAÇÕES)(\s+(QUANTIDADES|PREÇOS|OBSERVAÇÕES))*$/i;
+
+  // separa as páginas em blocos, cada um começando numa página com o banner
+  const blocos = [];
+  let atual = [];
+  paginas.forEach(pagina=>{
+    if(ehBannerInicio(pagina) && atual.length > 0){
+      blocos.push(atual);
+      atual = [];
+    }
+    atual.push(pagina);
+  });
+  if(atual.length > 0) blocos.push(atual);
+  if(blocos.length < 2) return null;
+
+  const resultadosBlocos = blocos.map(blocoPaginas=>{
+    const primeiraPagina = blocoPaginas[0];
+    // pula banner e linhas de rótulo de grupo (QUANTIDADES/PREÇOS/OBSERVAÇÕES) no início
+    let i = 0;
+    while(i < primeiraPagina.length){
+      const txt = textoLinha(primeiraPagina[i]);
+      if(BANNER_RE.test(txt) || GRUPO_RE.test(txt.trim())){ i++; } else { break; }
+    }
+    if(i >= primeiraPagina.length) return { cabecalho: [], porChave: new Map() };
+
+    const { cabecalho, atribuirColuna } = extrairTabelaDeLinhas(primeiraPagina, i);
+    const porChave = new Map();
+
+    function processarLinha(pIdx, linha){
+      const cols = new Array(cabecalho.length).fill('');
+      linha.items.forEach(it=>{
+        const idx = atribuirColuna(it.x);
+        cols[idx] = (cols[idx] ? cols[idx] + ' ' : '') + it.text;
+      });
+      porChave.set(pIdx + '_' + Math.round(linha.y), cols);
+    }
+
+    for(let li = i+1; li < primeiraPagina.length; li++) processarLinha(0, primeiraPagina[li]);
+    for(let pIdx = 1; pIdx < blocoPaginas.length; pIdx++){
+      blocoPaginas[pIdx].forEach(linha => processarLinha(pIdx, linha));
+    }
+
+    return { cabecalho, porChave };
+  }).filter(r => r.cabecalho.length > 0);
+
+  if(resultadosBlocos.length < 2) return null;
+
+  // une as chaves de todos os blocos, na ordem em que aparecem (por bloco, depois por inserção)
+  const chavesVistas = new Set();
+  const chavesOrdenadas = [];
+  resultadosBlocos.forEach(r=>{
+    r.porChave.forEach((_, chave)=>{
+      if(!chavesVistas.has(chave)){ chavesVistas.add(chave); chavesOrdenadas.push(chave); }
+    });
+  });
+
+  const cabecalho = [];
+  resultadosBlocos.forEach(r => cabecalho.push(...r.cabecalho));
+
+  const linhas = chavesOrdenadas.map(chave=>{
+    const linhaFinal = [];
+    resultadosBlocos.forEach(r=>{
+      const valores = r.porChave.get(chave);
+      if(valores) linhaFinal.push(...valores);
+      else linhaFinal.push(...new Array(r.cabecalho.length).fill(''));
+    });
+    return linhaFinal;
+  });
+
+  const linhasBrutas = linhas.map(l => l.filter(Boolean).join(' '));
+
+  return { cabecalho, linhas, linhasBrutas };
+}
+
+// ---------- TRATAMENTO (data_processor) ----------
+function limparCampo(valor){
+  if(valor === null || valor === undefined) return '';
+  let t = String(valor);
+  t = t.replace(/\s*\n\s*/g, ' ');
+  t = t.replace(/[ \t]{2,}/g, ' ');
+  return t.trim();
+}
+
+function tratarDados(bruto){
+  const colunas = bruto.cabecalho.map((c,i)=> limparCampo(c) || ('Coluna'+(i+1)));
+  const registros = [];
+
+  for(const linha of bruto.linhas){
+    const registro = {};
+    colunas.forEach((c,i)=>{ registro[c] = limparCampo(linha[i] || ''); });
+    const vazio = Object.values(registro).every(v => v === '');
+    if(vazio) continue;
+    registros.push(registro);
+  }
+
+  return { colunas, registros };
+}
+
+// Verifica se a extração por colunas (posição x) separou bem os dados,
+// ou se caiu tudo em pouquíssimas colunas (layout "empilhado", uma informação por linha).
+function tabelaTemBoaSeparacao(dadosTratados){
+  if(!dadosTratados || dadosTratados.colunas.length < 3 || dadosTratados.registros.length === 0) return false;
+  const amostra = dadosTratados.registros.slice(0, Math.min(20, dadosTratados.registros.length));
+  let colunasComDados = 0;
+  dadosTratados.colunas.forEach(c=>{
+    if(amostra.some(r => (r[c]||'').trim() !== '')) colunasComDados++;
+  });
+  return colunasComDados >= 3;
+}
+
+// ---------- MODO LINHA ÚNICA (fallback: descrição + valores na mesma linha) ----------
+// Para PDFs onde cada item já vem tudo numa linha só, mas sem alinhamento de coluna por posição x
+// (a descrição tem tamanho variável, então VEN/EST/ATUAL/DATA não caem sempre na mesma posição).
+// Estratégia: em cada linha, os últimos tokens são sempre [DATA opcional] [ATUAL] [EST] [VEN],
+// nessa ordem de trás pra frente — o resto (mesmo que tenha números, ex. "CHALLENGER 3") é descrição.
+function extrairPorLinhaUnica(linhasBrutas){
+  const regexData = /^\d{1,2}\/\d{1,2}\/\d{2,4}$/;
+  const regexPreco = /^-?\d+[.,]\d{2}$/;
+  const regexInteiro = /^-?\d+$/;
+  const regexMetadado = /^(Pag:|Em:|V\s+\d{1,2}\/\d{1,2}\/\d{2,4}|=+|-{2,})/i;
+
+  const colunas = ['DESCRIÇÃO','VEN','EST','ATUAL',' DATA ENTRADA'];
+  const registros = [];
+
+  (linhasBrutas||[]).forEach(linhaOriginal=>{
+    const linha = (linhaOriginal||'').replace(/^-{2,}/, '').trim();
+    if(!linha || regexMetadado.test(linha)) return;
+
+    const tokens = linha.split(/\s+/);
+    if(tokens.length < 4) return;
+
+    let idx = tokens.length - 1;
+    let dataEntrada = '';
+    if(regexData.test(tokens[idx])){
+      dataEntrada = tokens[idx];
+      idx--;
+    }
+    if(idx < 0 || !regexPreco.test(tokens[idx])) return;
+    const atual = tokens[idx]; idx--;
+    if(idx < 0 || !regexInteiro.test(tokens[idx])) return;
+    const est = tokens[idx]; idx--;
+    if(idx < 0 || !regexInteiro.test(tokens[idx])) return;
+    const ven = tokens[idx]; idx--;
+    if(idx < 0) return;
+
+    const descricao = tokens.slice(0, idx+1).join(' ');
+    if(!descricao) return;
+
+    registros.push({
+      'DESCRIÇÃO': descricao,
+      'VEN': ven,
+      'EST': est,
+      'ATUAL': atual,
+      ' DATA ENTRADA': dataEntrada,
+    });
+  });
+
+  return { colunas, registros };
+}
+
+// ---------- MODO SEQUENCIAL (fallback: uma informação por linha) ----------
+// Para PDFs onde cada item é uma descrição seguida de VEN, EST e ATUAL (+ data) em linhas separadas,
+// sem alinhamento de colunas por posição x — ex.: relatórios de "levantamento de mercadorias".
+function extrairSequencial(linhasBrutas){
+  const regexSoNumero = /^-?\d+([.,]\d+)?$/;
+  const regexPrecoComData = /^(-?\d+[.,]\d+)\s+(\d{1,2}\/\d{1,2}\/\d{2,4})$/;
+  const regexMetadado = /^(Pag:|Em:|V\s+\d{1,2}\/\d{1,2}\/\d{2,4})/i;
+
+  const linhas = (linhasBrutas||[])
+    .map(l => l.replace(/^-{2,}/, '').trim())
+    .filter(l => l !== '' && !regexMetadado.test(l));
+
+  const colunas = ['DESCRIÇÃO','VEN','EST','ATUAL',' DATA ENTRADA'];
+  const registros = [];
+  let i = 0;
+  while(i < linhas.length){
+    const l = linhas[i];
+    const ehSeparador = /^=+$/.test(l);
+    const ehNumerica = regexSoNumero.test(l) || regexPrecoComData.test(l);
+    if(ehNumerica || ehSeparador){ i++; continue; }
+
+    const valores = [];
+    let dataEntrada = '';
+    let j = i+1;
+    while(j < linhas.length && valores.length < 3){
+      const prox = linhas[j];
+      if(regexSoNumero.test(prox)){
+        valores.push(prox); j++;
+      } else if(regexPrecoComData.test(prox)){
+        const m = prox.match(regexPrecoComData);
+        valores.push(m[1]);
+        dataEntrada = m[2];
+        j++;
+      } else break;
+    }
+
+    // só aceita como item se o 3º valor parece um preço (tem separador decimal)
+    if(valores.length === 3 && /[.,]\d{2}$/.test(valores[2])){
+      registros.push({
+        'DESCRIÇÃO': l,
+        'VEN': valores[0],
+        'EST': valores[1],
+        'ATUAL': valores[2],
+        ' DATA ENTRADA': dataEntrada,
+      });
+      i = j;
+    } else {
+      i++;
+    }
+  }
+
+  return { colunas, registros };
+}
+
+// Detecta a marca (palavra que se repete no meio da maioria das descrições) e separa
+// CATEGORIA (1ª palavra), TIPO (entre a categoria e a marca), MARCA / LINHA e REFERÊNCIA (resto).
+// Ex.: "CALCADOS TENIS OLYMPIKUS 130G ULTRALEVE" -> CATEGORIA=CALCADOS, TIPO=TENIS,
+// MARCA / LINHA=OLYMPIKUS, REFERÊNCIA=130G ULTRALEVE
+//
+// Quando não existe uma marca única dominante (catálogo que mistura várias marcas — nesse caso a
+// ---------- MARCAS CONHECIDAS (lista opcional do usuário, salva no navegador) ----------
+const CHAVE_MARCAS_CONHECIDAS = 'extrator_pdf_pro_marcas_conhecidas';
+const listaMarcasEl = document.getElementById('lista-marcas');
+const statusMarcasEl = document.getElementById('status-marcas');
+
+function carregarMarcasConhecidas(){
+  try{
+    const bruto = localStorage.getItem(CHAVE_MARCAS_CONHECIDAS);
+    return bruto ? JSON.parse(bruto) : [];
+  }catch(err){
+    return [];
+  }
+}
+
+function salvarMarcasConhecidas(lista){
+  try{
+    localStorage.setItem(CHAVE_MARCAS_CONHECIDAS, JSON.stringify(lista));
+    return true;
+  }catch(err){
+    return false;
+  }
+}
+
+// preenche o campo com a lista já salva, se houver, e mostra a contagem no badge da aba
+const btnToggleMarcas = document.getElementById('btn-toggle-marcas');
+const btnToggleAdivinhadas = document.getElementById('btn-toggle-adivinhadas');
+const cardMarcasConhecidas = document.getElementById('card-marcas-conhecidas');
+const cardMarcasAdivinhadas = document.getElementById('card-marcas-adivinhadas');
+const badgeMarcasConhecidas = document.getElementById('badge-marcas-conhecidas');
+const badgeMarcasAdivinhadas = document.getElementById('badge-marcas-adivinhadas');
+const listaAdivinhadasContainer = document.getElementById('lista-adivinhadas-container');
+const statusAdivinhadasEl = document.getElementById('status-adivinhadas');
+const inputImportarMarcas = document.getElementById('input-importar-marcas');
+
+function atualizarBadgeConhecidas(qtd){
+  if(!badgeMarcasConhecidas) return;
+  if(qtd > 0){ badgeMarcasConhecidas.textContent = qtd; badgeMarcasConhecidas.style.display = ''; }
+  else { badgeMarcasConhecidas.style.display = 'none'; }
+}
+
+function abrirPainelMarcas(painelParaAbrir){
+  const painéis = [
+    { btn: btnToggleMarcas, card: cardMarcasConhecidas },
+    { btn: btnToggleAdivinhadas, card: cardMarcasAdivinhadas },
+  ];
+  painéis.forEach(p=>{
+    const deveAbrir = p.card === painelParaAbrir;
+    p.card.classList.toggle('hidden', !deveAbrir);
+    p.btn.classList.toggle('active', deveAbrir);
+  });
+  if(painelParaAbrir){
+    painelParaAbrir.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+if(btnToggleMarcas){
+  btnToggleMarcas.addEventListener('click', ()=>{
+    const estaAberto = !cardMarcasConhecidas.classList.contains('hidden');
+    abrirPainelMarcas(estaAberto ? null : cardMarcasConhecidas);
+  });
+}
+if(btnToggleAdivinhadas){
+  btnToggleAdivinhadas.addEventListener('click', ()=>{
+    const estaAberto = !cardMarcasAdivinhadas.classList.contains('hidden');
+    abrirPainelMarcas(estaAberto ? null : cardMarcasAdivinhadas);
+  });
+}
+
+(function initMarcasConhecidas(){
+  const salvas = carregarMarcasConhecidas();
+  if(salvas.length > 0 && listaMarcasEl){
+    listaMarcasEl.value = salvas.join('\n');
+  }
+  atualizarBadgeConhecidas(salvas.length);
+})();
+
+if(document.getElementById('btn-salvar-marcas')){
+  document.getElementById('btn-salvar-marcas').addEventListener('click', ()=>{
+    const linhas = listaMarcasEl.value.split('\n').map(l=>l.trim().toUpperCase()).filter(Boolean);
+    const unicas = Array.from(new Set(linhas));
+    const ok = salvarMarcasConhecidas(unicas);
+    setStatus(statusMarcasEl, ok
+      ? `${unicas.length} marca(s) salva(s) — serão usadas na próxima extração.`
+      : 'Não foi possível salvar a lista neste navegador.', ok ? 'ok' : 'err');
+    if(ok) atualizarBadgeConhecidas(unicas.length);
+  });
+}
+
+// ---------- Exportar / Importar a lista de marcas (.txt) ----------
+if(document.getElementById('btn-exportar-marcas')){
+  document.getElementById('btn-exportar-marcas').addEventListener('click', ()=>{
+    const linhas = listaMarcasEl.value.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(linhas.length === 0){
+      setStatus(statusMarcasEl, 'A lista está vazia — não há nada pra exportar.', 'err');
+      return;
+    }
+    const blob = new Blob([linhas.join('\n') + '\n'], { type: 'text/plain;charset=utf-8;' });
+    baixarBlob(blob, 'marcas-conhecidas.txt');
+    setStatus(statusMarcasEl, `${linhas.length} marca(s) exportada(s) em marcas-conhecidas.txt`, 'ok');
+  });
+}
+
+if(document.getElementById('btn-importar-marcas') && inputImportarMarcas){
+  document.getElementById('btn-importar-marcas').addEventListener('click', ()=> inputImportarMarcas.click());
+  inputImportarMarcas.addEventListener('change', async (e)=>{
+    const file = e.target.files && e.target.files[0];
+    inputImportarMarcas.value = '';
+    if(!file) return;
+    try{
+      const texto = await file.text();
+      const novasLinhas = texto.split('\n').map(l=>l.trim().toUpperCase()).filter(Boolean);
+      const existentes = listaMarcasEl.value.split('\n').map(l=>l.trim().toUpperCase()).filter(Boolean);
+      const combinadas = Array.from(new Set([...existentes, ...novasLinhas]));
+      listaMarcasEl.value = combinadas.join('\n');
+      const ok = salvarMarcasConhecidas(combinadas);
+      const novasDeVerdade = combinadas.length - existentes.length;
+      setStatus(statusMarcasEl, ok
+        ? `Importado: ${novasDeVerdade} marca(s) nova(s) adicionada(s) (${combinadas.length} no total).`
+        : 'Arquivo lido, mas não foi possível salvar neste navegador.', ok ? 'ok' : 'err');
+      if(ok) atualizarBadgeConhecidas(combinadas.length);
+    }catch(err){
+      console.error(err);
+      setStatus(statusMarcasEl, 'Erro ao ler o arquivo: ' + err.message, 'err');
+    }
+  });
+}
+
+// ---------- Marcas adivinhadas (coletadas automaticamente durante a extração) ----------
+// Map: nome da marca -> quantidade de itens que bateram com ela por adivinhação (não pela lista
+// de marcas conhecidas). Acumula entre extrações até o usuário limpar ou adicionar à lista.
+let marcasAdivinhadas = new Map();
+
+function registrarMarcaAdivinhada(nome){
+  if(!nome) return;
+  marcasAdivinhadas.set(nome, (marcasAdivinhadas.get(nome) || 0) + 1);
+}
+
+function renderizarMarcasAdivinhadas(){
+  if(!listaAdivinhadasContainer) return;
+  atualizarBadgeAdivinhadas();
+  if(marcasAdivinhadas.size === 0){
+    listaAdivinhadasContainer.innerHTML = '<div class="lista-adivinhadas-vazia">Nenhuma marca adivinhada ainda — extraia um PDF sem marca correspondente na lista conhecida pra ver itens aqui.</div>';
+    return;
+  }
+  const ordenadas = Array.from(marcasAdivinhadas.entries()).sort((a,b)=> b[1]-a[1]);
+  listaAdivinhadasContainer.innerHTML = ordenadas.map(([nome,qtd], idx)=>`
+    <div class="item-adivinhada" data-original="${escapeHtml(nome)}">
+      <input type="checkbox" class="chk-adivinhada" checked>
+      <input type="text" class="input-nome-marca" value="${escapeHtml(nome)}" spellcheck="false" title="Corrija o nome da marca aqui, se necessário">
+      <span class="contagem-marca">${qtd} item${qtd===1?'':'s'}</span>
+    </div>
+  `).join('');
+  listaAdivinhadasContainer.querySelectorAll('.input-nome-marca').forEach(input=>{
+    const original = input.closest('.item-adivinhada').dataset.original;
+    input.addEventListener('input', ()=>{
+      input.classList.toggle('editado', input.value.trim().toUpperCase() !== original.toUpperCase());
+    });
+  });
+}
+
+function atualizarBadgeAdivinhadas(){
+  if(!badgeMarcasAdivinhadas) return;
+  if(marcasAdivinhadas.size > 0){ badgeMarcasAdivinhadas.textContent = marcasAdivinhadas.size; badgeMarcasAdivinhadas.style.display = ''; }
+  else { badgeMarcasAdivinhadas.style.display = 'none'; }
+}
+
+if(document.getElementById('btn-selecionar-todas-adivinhadas')){
+  document.getElementById('btn-selecionar-todas-adivinhadas').addEventListener('click', ()=>{
+    const checkboxes = listaAdivinhadasContainer.querySelectorAll('.chk-adivinhada');
+    const todasMarcadas = Array.from(checkboxes).every(c=>c.checked);
+    checkboxes.forEach(c => c.checked = !todasMarcadas);
+  });
+}
+
+if(document.getElementById('btn-adicionar-adivinhadas')){
+  document.getElementById('btn-adicionar-adivinhadas').addEventListener('click', ()=>{
+    const linhasSelecionadas = Array.from(listaAdivinhadasContainer.querySelectorAll('.item-adivinhada'))
+      .filter(linha => linha.querySelector('.chk-adivinhada').checked);
+    if(linhasSelecionadas.length === 0){
+      setStatus(statusAdivinhadasEl, 'Selecione ao menos uma marca pra adicionar.', 'err');
+      return;
+    }
+    const nomesOriginais = [];
+    const nomesFinais = [];
+    linhasSelecionadas.forEach(linha=>{
+      const valorAtual = linha.querySelector('.input-nome-marca').value.trim();
+      if(!valorAtual) return; // campo deixado em branco — ignora essa linha
+      nomesOriginais.push(linha.dataset.original);
+      nomesFinais.push(valorAtual.toUpperCase());
+    });
+    if(nomesFinais.length === 0){
+      setStatus(statusAdivinhadasEl, 'O nome da marca não pode ficar em branco.', 'err');
+      return;
+    }
+    const existentes = listaMarcasEl.value.split('\n').map(l=>l.trim().toUpperCase()).filter(Boolean);
+    const combinadas = Array.from(new Set([...existentes, ...nomesFinais]));
+    listaMarcasEl.value = combinadas.join('\n');
+    const ok = salvarMarcasConhecidas(combinadas);
+    nomesOriginais.forEach(m => marcasAdivinhadas.delete(m));
+    renderizarMarcasAdivinhadas();
+    atualizarBadgeConhecidas(combinadas.length);
+    setStatus(statusAdivinhadasEl, ok
+      ? `${nomesFinais.length} marca(s) adicionada(s) à lista conhecida.`
+      : 'Não foi possível salvar a lista neste navegador.', ok ? 'ok' : 'err');
+  });
+}
+
+if(document.getElementById('btn-limpar-adivinhadas')){
+  document.getElementById('btn-limpar-adivinhadas').addEventListener('click', ()=>{
+    marcasAdivinhadas.clear();
+    renderizarMarcasAdivinhadas();
+    setStatus(statusAdivinhadasEl, 'Lista de marcas adivinhadas limpa.', 'ok');
+  });
+}
+
+renderizarMarcasAdivinhadas();
+
+// Tenta casar a descrição com uma marca conhecida (marcas de mais palavras primeiro, pra "VIA MARTE"
+// não ser confundida com só "VIA"). Retorna {categoria, tipo, marca, referencia} ou null se não achar.
+function casarComMarcaConhecida(tokens, marcasOrdenadas){
+  for(const marcaTokens of marcasOrdenadas){
+    for(let i=1; i+marcaTokens.length <= tokens.length; i++){
+      let bate = true;
+      for(let j=0; j<marcaTokens.length; j++){
+        if(tokens[i+j].toUpperCase() !== marcaTokens[j]){ bate = false; break; }
+      }
+      if(bate){
+        return {
+          categoria: tokens.slice(0,1).join(' '),
+          tipo: tokens.slice(1, i).join(' '),
+          marca: tokens.slice(i, i+marcaTokens.length).join(' '),
+          referencia: tokens.slice(i+marcaTokens.length).join(' '),
+        };
+      }
+    }
+  }
+  return null;
+}
+
+// palavra mais repetida tende a ser o TIPO, já que há menos tipos diferentes que marcas), usa como
+// alternativa a posição fixa das palavras: CATEGORIA=1ª palavra, TIPO=2ª, MARCA=3ª, REFERÊNCIA=resto.
+// Funciona bem pra tipos de uma palavra só; tipos de duas palavras (ex. "KIT MEIA") podem sair com
+// a divisão um pouco deslocada — ainda assim melhor que não separar nada.
+//
+// Em ambos os métodos, depois de achar a posição da marca, checa se a palavra seguinte SEMPRE
+// acompanha a marca (ex.: "COLA" sempre vem logo depois de "COCA") — se sim, marca de duas
+// palavras (ex. "COCA COLA") e não corta ela ao meio.
+function detectarExtensaoMarca(descricoes, indiceMarcaDe){
+  const contagemProxima = {};
+  let comIndiceValido = 0;
+  descricoes.forEach(d=>{
+    const tokens = d.split(/\s+/);
+    const idx = indiceMarcaDe(tokens);
+    if(idx == null || idx < 0 || idx+1 >= tokens.length) return;
+    comIndiceValido++;
+    const prox = tokens[idx+1];
+    if(/^[A-ZÀ-Ÿ-]+$/.test(prox)){
+      contagemProxima[prox] = (contagemProxima[prox]||0) + 1;
+    }
+  });
+  let melhor = null, melhorContagem = 0;
+  Object.keys(contagemProxima).forEach(p=>{
+    if(contagemProxima[p] > melhorContagem){ melhorContagem = contagemProxima[p]; melhor = p; }
+  });
+  if(melhor && comIndiceValido >= 5 && melhorContagem / comIndiceValido >= 0.85){
+    return melhor;
+  }
+  return null;
+}
+
+// Igual à de cima, mas pro método posicional: como cada linha pode ter uma marca DIFERENTE na
+// mesma posição (3ª palavra), não dá pra procurar "uma resposta só" pro catálogo inteiro — tem que
+// agrupar por qual palavra apareceu ali e checar a consistência de cada uma separadamente.
+// Ex.: "RIO" só deve contar como extensão de "BEIRA", não do catálogo todo.
+//
+// Uma mesma palavra-base pode ter VÁRIAS continuações legítimas e diferentes (ex.: "VIA" é prefixo
+// de "VIA MARTE", "VIA UNO", "VIA SCARPA" — marcas de verdade diferentes, nenhuma domina sozinha).
+// Por isso, em vez de exigir uma única resposta que apareça na maioria das vezes, reconhece QUALQUER
+// continuação que se repita o suficiente pra não ser coincidência (evita confundir com o início de
+// um código de referência, que varia demais de um item pro outro).
+function detectarExtensoesPosicionais(descricoes, indiceBaseDe){
+  const porPalavraBase = {}; // { 'VIA': { contagem: {'MARTE':167,'UNO':74,...}, total: 278 } }
+  descricoes.forEach(d=>{
+    const tokens = d.split(/\s+/);
+    const idx = indiceBaseDe(tokens);
+    if(idx == null || idx < 0 || idx+1 >= tokens.length) return;
+    const base = tokens[idx];
+    if(!/^[A-ZÀ-Ÿ-]+$/.test(base)) return;
+    if(!porPalavraBase[base]) porPalavraBase[base] = { contagem: {}, total: 0 };
+    porPalavraBase[base].total++;
+    const prox = tokens[idx+1];
+    if(/^[A-ZÀ-Ÿ-]+$/.test(prox)){
+      porPalavraBase[base].contagem[prox] = (porPalavraBase[base].contagem[prox]||0) + 1;
+    }
+  });
+
+  // extensoes[base] agora é um Set de continuações reconhecidas (pode ter mais de uma)
+  const extensoes = {};
+  Object.keys(porPalavraBase).forEach(base=>{
+    const info = porPalavraBase[base];
+    if(info.total < 3) return; // amostra pequena demais pra confiar
+    const reconhecidas = new Set();
+    Object.keys(info.contagem).forEach(p=>{
+      const contagemP = info.contagem[p];
+      // reconhece a continuação se aparecer pelo menos 5 vezes E for pelo menos 2% dos casos
+      // dessa palavra-base — filtra coincidências isoladas sem exigir que domine sozinha
+      if(contagemP >= 5 && contagemP / info.total >= 0.02){
+        reconhecidas.add(p);
+      }
+    });
+    if(reconhecidas.size > 0){
+      extensoes[base] = reconhecidas;
+    }
+  });
+  return extensoes;
+}
+
+function separarDescricaoEmCampos(dados){
+  if(!dados || !dados.colunas.includes('DESCRIÇÃO')) return dados;
+  const descricoes = dados.registros.map(r => (r['DESCRIÇÃO']||'').trim()).filter(Boolean);
+  if(descricoes.length < 3) return dados;
+
+  // lista de marcas conhecidas do usuário (se houver) — tenta bater com ela primeiro, antes de
+  // qualquer adivinhação. Ordena as de mais palavras primeiro pra "VIA MARTE" não ser confundida
+  // com só "VIA".
+  const marcasConhecidas = carregarMarcasConhecidas();
+  const marcasOrdenadas = marcasConhecidas
+    .map(m => m.split(/\s+/).filter(Boolean))
+    .filter(toks => toks.length > 0)
+    .sort((a,b) => b.length - a.length);
+
+  const contagem = {};
+  descricoes.forEach(d=>{
+    const tokens = d.split(/\s+/);
+    tokens.slice(1).forEach(t=>{
+      if(/^[A-ZÀ-Ÿ-]+$/.test(t) && t.length >= 3){
+        contagem[t] = (contagem[t]||0) + 1;
+      }
+    });
+  });
+  let marca = null, melhorContagem = 0;
+  Object.keys(contagem).forEach(t=>{
+    if(contagem[t] > melhorContagem){ melhorContagem = contagem[t]; marca = t; }
+  });
+  const temMarcaDominante = marca && melhorContagem >= descricoes.length * 0.6;
+
+  // se a marca dominante for sempre seguida da mesma palavra, a marca de verdade tem duas palavras
+  const extensaoMarcaDominante = temMarcaDominante
+    ? detectarExtensaoMarca(descricoes, tokens => tokens.indexOf(marca))
+    : null;
+
+  // exige que a maioria das descrições tenha pelo menos 4 palavras (categoria + tipo + marca +
+  // referência) pra valer a pena tentar a divisão posicional
+  const comQuatroOuMais = descricoes.filter(d => d.split(/\s+/).length >= 4).length;
+  const podeDivisaoPosicional = comQuatroOuMais >= descricoes.length * 0.5;
+  // com uma lista de marcas conhecidas, não precisa de nenhum dos dois heurísticos pra valer a pena
+  // tentar separar — a lista pode resolver sozinha
+  if(!temMarcaDominante && !podeDivisaoPosicional && marcasOrdenadas.length === 0) return dados;
+
+  // mesma checagem pro método posicional (marca sempre na 3ª palavra) — mas por marca candidata,
+  // não uma resposta única pro catálogo todo (ver função acima)
+  const extensoesPosicionais = podeDivisaoPosicional
+    ? detectarExtensoesPosicionais(descricoes, tokens => tokens.length >= 4 ? 2 : null)
+    : {};
+
+  const novasColunas = dados.colunas.slice();
+  ['CATEGORIA','TIPO','MARCA / LINHA','REFERÊNCIA'].forEach(c=>{
+    if(!novasColunas.includes(c)) novasColunas.push(c);
+  });
+
+  const registros = dados.registros.map(r=>{
+    const desc = (r['DESCRIÇÃO']||'').trim();
+    const tokens = desc.split(/\s+/);
+    const novo = {...r};
+
+    if(marcasOrdenadas.length > 0){
+      const bateu = casarComMarcaConhecida(tokens, marcasOrdenadas);
+      if(bateu){
+        novo['CATEGORIA'] = bateu.categoria;
+        novo['TIPO'] = bateu.tipo;
+        novo['MARCA / LINHA'] = bateu.marca;
+        novo['REFERÊNCIA'] = bateu.referencia;
+        return novo;
+      }
+      // não bateu com nenhuma marca da lista — cai pras adivinhações abaixo
+    }
+
+    if(temMarcaDominante){
+      const idxMarca = tokens.indexOf(marca);
+      if(idxMarca > 0){
+        const marcaEstende = extensaoMarcaDominante && tokens[idxMarca+1] === extensaoMarcaDominante;
+        const marcaCompleta = marcaEstende ? marca + ' ' + extensaoMarcaDominante : marca;
+        const proximaLivre = marcaEstende ? idxMarca+2 : idxMarca+1;
+        novo['CATEGORIA'] = tokens.slice(0,1).join(' ');
+        novo['TIPO'] = tokens.slice(1, idxMarca).join(' ');
+        novo['MARCA / LINHA'] = marcaCompleta;
+        novo['REFERÊNCIA'] = tokens.slice(proximaLivre).join(' ');
+        registrarMarcaAdivinhada(marcaCompleta);
+        return novo;
+      }
+      // essa descrição em particular não tem a marca dominante — cai pra divisão posicional abaixo
+    }
+
+    if(tokens.length >= 4){
+      const extensoesReconhecidas = extensoesPosicionais[tokens[2]];
+      const marcaEstende = extensoesReconhecidas && extensoesReconhecidas.has(tokens[3]);
+      novo['CATEGORIA'] = tokens[0];
+      novo['TIPO'] = tokens[1];
+      novo['MARCA / LINHA'] = marcaEstende ? tokens[2] + ' ' + tokens[3] : tokens[2];
+      novo['REFERÊNCIA'] = tokens.slice(marcaEstende ? 4 : 3).join(' ');
+      registrarMarcaAdivinhada(novo['MARCA / LINHA']);
+    } else {
+      novo['CATEGORIA'] = '';
+      novo['TIPO'] = '';
+      novo['MARCA / LINHA'] = '';
+      novo['REFERÊNCIA'] = desc;
+    }
+    return novo;
+  });
+
+  renderizarMarcasAdivinhadas();
+  return { colunas: novasColunas, registros };
+}
+
+// Extrai e escolhe automaticamente o modo que melhor separou os dados: tabela por posição,
+// linha única (descrição + valores na mesma linha) ou sequencial (um valor por linha).
+function extrairEProcessar(bruto){
+  const periodoVerificado = bruto.periodoVerificado || '';
+  const tabela = tratarDados(bruto);
+  if(tabelaTemBoaSeparacao(tabela)){
+    return { dados: tabela, modo: 'tabela', periodoVerificado };
+  }
+  const linhaUnica = extrairPorLinhaUnica(bruto.linhasBrutas || []);
+  const seq = extrairSequencial(bruto.linhasBrutas || []);
+  if(linhaUnica.registros.length > 0 && linhaUnica.registros.length >= seq.registros.length){
+    return { dados: separarDescricaoEmCampos(linhaUnica), modo: 'linha-única', periodoVerificado };
+  }
+  if(seq.registros.length > 0){
+    return { dados: separarDescricaoEmCampos(seq), modo: 'sequencial', periodoVerificado };
+  }
+  return { dados: tabela, modo: 'tabela', periodoVerificado };
+}
+
+// ---------- PRÉ-VISUALIZAÇÃO ----------
+function renderPreview(dados){
+  const { colunas, registros } = dados;
+  previewCount.textContent = `${colunas.length} coluna(s) · ${registros.length} registro(s)`;
+
+  const limite = 30;
+  let html = '<thead><tr>' + colunas.map(c=>`<th>${escapeHtml(c)}</th>`).join('') + '</tr></thead><tbody>';
+  registros.slice(0, limite).forEach(r=>{
+    html += '<tr>' + colunas.map(c=>`<td>${escapeHtml(r[c])}</td>`).join('') + '</tr>';
+  });
+  html += '</tbody>';
+  previewTable.innerHTML = html;
+
+  if(registros.length > limite){
+    const extra = document.createElement('div');
+    extra.className = 'more-rows';
+    extra.textContent = `… +${registros.length - limite} registro(s) não exibido(s) na prévia (a exportação inclui todos)`;
+    previewTable.parentElement.appendChild(extra);
+  }
+}
+
+function escapeHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ---------- EXPORTAÇÃO ----------
+function parecceCodigoComZero(v){
+  return /^0\d+$/.test((v||'').trim());
+}
+
+function baixarBlob(blob, nomeArquivo){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(url), 4000);
+}
+
+document.getElementById('btn-xlsx').addEventListener('click', ()=>{
+  if(!dadosTratados) return;
+  try{
+    const { colunas, registros } = dadosTratados;
+    const aoa = [colunas, ...registros.map(r => colunas.map(c => r[c] ?? ''))];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    // preserva zeros à esquerda formatando como texto
+    registros.forEach((r, rowIdx)=>{
+      colunas.forEach((c, colIdx)=>{
+        const val = r[c] ?? '';
+        if(parecceCodigoComZero(val)){
+          const addr = XLSX.utils.encode_cell({r: rowIdx+1, c: colIdx});
+          if(ws[addr]){ ws[addr].t = 's'; ws[addr].z = '@'; }
+        }
+      });
+    });
+
+    ws['!cols'] = colunas.map(c => ({ wch: Math.max(c.length, 12) }));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Dados Extraídos');
+    XLSX.writeFile(wb, nomeBase + '.xlsx');
+    setStatus(statusExport, `XLSX gerado: ${nomeBase}.xlsx`, 'ok');
+  }catch(err){
+    console.error(err);
+    setStatus(statusExport, 'Erro ao gerar XLSX: ' + err.message, 'err');
+  }
+});
+
+document.getElementById('btn-csv').addEventListener('click', ()=>{
+  if(!dadosTratados) return;
+  try{
+    const { colunas, registros } = dadosTratados;
+    const linhas = [colunas, ...registros.map(r => colunas.map(c => r[c] ?? ''))];
+
+    const csv = linhas.map(linha =>
+      linha.map(campo => {
+        let v = String(campo ?? '');
+        if(/[";\n\r]/.test(v)){
+          v = '"' + v.replace(/"/g, '""') + '"';
+        }
+        return v;
+      }).join(';')
+    ).join('\r\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    baixarBlob(blob, nomeBase + '.csv');
+    setStatus(statusExport, `CSV gerado: ${nomeBase}.csv`, 'ok');
+  }catch(err){
+    console.error(err);
+    setStatus(statusExport, 'Erro ao gerar CSV: ' + err.message, 'err');
+  }
+});
+
+</script>
+<script>
+// ---------- PWA: service worker + instalação ----------
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(err=> console.warn('Service worker não registrado:', err));
+  });
+}
+let eventoInstalacao = null;
+const btnInstalar = document.getElementById('btn-instalar');
+const dicaIos = document.getElementById('dica-ios');
+const jaInstalado = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  eventoInstalacao = e;
+  if(btnInstalar && !jaInstalado) btnInstalar.style.display = '';
+});
+if(btnInstalar){
+  btnInstalar.addEventListener('click', async ()=>{
+    if(!eventoInstalacao) return;
+    eventoInstalacao.prompt();
+    await eventoInstalacao.userChoice;
+    eventoInstalacao = null;
+    btnInstalar.style.display = 'none';
+  });
+}
+window.addEventListener('appinstalled', ()=>{ if(btnInstalar) btnInstalar.style.display = 'none'; });
+if(dicaIos && !jaInstalado && /iphone|ipad|ipod/i.test(navigator.userAgent)){
+  dicaIos.style.display = '';
+}
+</script>
+</body>
+</html>
